@@ -30,6 +30,11 @@ A stability score is comparable only when all three remain fixed:
 2. functional scope;
 3. assumed external contracts and architecture.
 
+A revision that only removes ambiguity, fixes a contradiction, or clarifies
+existing behavior does **not** change functional scope; only adding, removing,
+or repurposing a feature does. Bug-fix and clarification revisions therefore
+remain score-comparable to the original at the same resolution.
+
 When comparing revisions, score both at the same resolution first. A separate
 deeper review may be useful, but it is a new measurement rather than evidence
 that the revision regressed.

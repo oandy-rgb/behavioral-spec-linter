@@ -36,10 +36,21 @@ testable revisions.
    `Scenario | Outcome | Forced assumption or decision`. State the observable
    outcome each scenario produces under that reading; never leave a cell as
    prose hand-waving. The three tables must cover the identical scenarios in
-   the same order.
-5. Keep the interpretations independent. When subagents are available, give
-   each subagent only the original specification, the shared scenario set, and
-   one interpretation role — never the other roles' output. This blind,
+   the same order. These three per-role tables are the working artifact of this
+   step (in blind subagent mode, each subagent emits exactly one and never sees
+   the others). They are distinct from the merged comparison matrix produced in
+   step 6 — do not collapse them here.
+5. Keep the interpretations independent. The orchestrating agent that received
+   the review request makes one availability check: if its own toolset can
+   spawn agents (an Agent/Task tool is present), it MUST run the three
+   interpretations as independent blind subagents and declare
+   `Mode: independent subagents`. Availability is judged only at this
+   orchestrating layer and only by tool presence — not by whether you elect to
+   invoke it, and never re-judged inside a subagent (a blind subagent lacking
+   the tool does not flip the run to degraded). Having the tool and running
+   single-context anyway is not permitted. Give each subagent only the original
+   specification, the shared scenario set, and one interpretation role — never
+   the other roles' output. This blind,
    independent mode is the intended path and the only one that reliably
    surfaces divergence.
    If subagents are not available, run separate passes without carrying
@@ -49,10 +60,13 @@ testable revisions.
    `Mode: degraded single-context (lower confidence)` and note that
    borderline divergences may be under-reported.
 6. Compare the shadow implementations cell by cell over the shared scenario
-   set. A divergence is any scenario whose `Outcome` differs across two or
-   more interpretations; that scenario, traced to its source clause, is the
-   seed of a finding. Compare observable behavior, not wording. Apply only
-   checks at or below the selected resolution:
+   set. Render the comparison as a single **merged matrix** with one row per
+   scenario and the columns `Scenario | Literal | Operational | Adversarial`
+   (the form shown in the Worked Example); each cell carries that role's
+   `Outcome` from its step-4 table. A divergence is any scenario whose row
+   differs across two or more interpretations; that scenario, traced to its
+   source clause, is the seed of a finding. Compare observable behavior, not
+   wording. Apply only checks at or below the selected resolution:
    - trigger and eligibility conditions;
    - validation precedence;
    - state transitions and data ownership;
@@ -122,7 +136,8 @@ testable revisions.
 
 Start with:
 
-- **Verdict**
+- **Verdict**: exactly one of `Implementation-ready`, `Implementable with
+  caveats`, or `Not implementable`, followed by a one-sentence reason
 - **Stability score**
 - **Review resolution**: `L1`, `L2`, `L3`, or `L4`
 - **Review scope**: the behavior and interfaces included in the score
@@ -136,6 +151,11 @@ scientific measurement:
 - `70-89`: mostly stable; a few decisions or edge cases remain.
 - `40-69`: material ambiguity likely to produce divergent implementations.
 - `0-39`: core behavior or policy is not specified consistently.
+
+Bind the score to the highest open finding severity so the number can never
+contradict the findings: any open **Critical** finding caps the score at `39`;
+any open **High** finding with no Critical caps it at `69`. Within the permitted
+ceiling the exact value remains a communication aid, not a measurement.
 
 Then report findings in severity order:
 
@@ -191,7 +211,8 @@ A compact end-to-end run. The specification under review:
 - S4 `$11,000`, balance `$4,000`
 - S5 two `$3,000` withdrawals at the same instant, balance `$5,000`
 
-**Shadow implementations** (step 4) — each role tested against the same set:
+**Merged comparison matrix** (step 6) — the three per-role step-4 tables
+collapsed into one view, each role tested against the same set:
 
 | Scenario | Literal | Operational | Adversarial |
 |---|---|---|---|
@@ -216,10 +237,10 @@ missing concurrency contract.
 - **Review resolution:** `L2` · **Review scope:** withdrawal accept/reject,
   limit enforcement, ordering, concurrency · **Mode:** independent subagents
 
-| Severity | Type | Source | Divergent interpretations | Proposed contract |
-|---|---|---|---|---|
-| Critical | Contradiction | "require manager approval" ✕ "$5,000" limit | approval clause is dead vs limit is per-withdrawal | State the relation explicitly: daily limit is cumulative; a `>$10,000` withdrawal is approval-gated and still bound by (or explicitly exempt from) the cumulative limit |
-| Critical | Missing contract | "daily withdrawal limit is $5,000" | advisory vs hard reject | A withdrawal exceeding the cumulative daily limit MUST be rejected `daily_limit_exceeded` |
+| Severity | Type | Source | Divergent interpretations | Impact | Proposed contract |
+|---|---|---|---|---|---|
+| Critical | Contradiction | "require manager approval" ✕ "$5,000" limit | approval clause is dead vs limit is per-withdrawal | Manager approval may never trigger, or large withdrawals bypass the daily cap | State the relation explicitly: daily limit is cumulative; a `>$10,000` withdrawal is approval-gated and still bound by (or explicitly exempt from) the cumulative limit |
+| Critical | Missing contract | "daily withdrawal limit is $5,000" | advisory vs hard reject | Accounts can overdraw past the stated daily limit | A withdrawal exceeding the cumulative daily limit MUST be rejected `daily_limit_exceeded` |
 
 **Well-specified:** "rejected if insufficient funds" — the one clause with a
 stated consequence; all three readings reject S4 on funds (only `<` vs `<=`
