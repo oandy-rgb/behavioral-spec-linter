@@ -23,9 +23,9 @@ SpecLint breaks the cycle by forcing the spec to *prove* it is unambiguous **bef
 ### How it works
 
 1.  **Scope** — derive a single shared **scenario set**: concrete probe cases that exercise the boundaries, conflicting clauses, concurrency, and time/limit interactions.
-2.  **Perturb & implement** — produce three *independent* interpretations of the spec — `literal`, `operational`, and `adversarial` — and have each emit a **shadow implementation**: a decision table over the same scenario set. When subagents are available, each runs blind, seeing only the original spec and its one role.
-3.  **Judge** — compare the shadow tables cell by cell. Any scenario whose outcome differs across interpretations is a divergence — evidence that the original spec is ambiguous.
-4.  **Report** — trace each divergence to the smallest source clause, classify it (`Ambiguity`, `Missing contract`, `Contradiction`, `Undefined term`, `Hidden assumption`, …), rank by impact, and propose a precise contract that converts directly into a test.
+2.  **Perturb & implement** — produce blind `literal`, `operational`, and `adversarial` shadow implementations.
+3.  **Judge** — compare scenarios, normalize candidate findings, and cluster semantically equivalent findings while rejecting merely similar or contradictory matches.
+4.  **Report** — emit a compact stability profile and precise repairs. Optional reliability audits add repeated runs and finding-support metrics.
 
 > The blind, multi-agent path is what reliably surfaces divergence. Run without subagents and SpecLint marks the review `degraded single-context (lower confidence)` rather than pretending the interpretations were independent.
 
@@ -37,7 +37,8 @@ SpecLint breaks the cycle by forcing the spec to *prove* it is unambiguous **bef
 |---|---|
 | `SKILL.md` | The skill: the full review procedure and output contract. |
 | `references/review-rubric.md` | Finding types, severity, review-resolution levels (`L1`–`L4`), evidence and revision standards. |
-| `agents/openai.yaml` | Interface metadata (display name, default prompt). |
+| `references/reliability-protocol.md` | Optional repeated-run finding matching and support-tier protocol. |
+| `scripts/aggregate_reliability.py` | Deterministic aggregation for an optional reliability audit. |
 
 ---
 
@@ -51,13 +52,17 @@ Use behavioral-spec-linter to stress-test this specification and propose precise
 
 You get back a structured review:
 
-- a **verdict** and a **stability score** (0–100), scoped to a declared review resolution;
+- a **verdict** and an uncalibrated **stability profile** showing scenario
+  convergence, finding counts, highest severity, and review confidence;
 - the interpretation **mode** (independent subagents vs. degraded single-context);
-- a **findings table** ordered by severity, each with its source clause, divergent interpretations, impact, and a proposed contract;
+- a compact findings table with semantic identities, severity vectors, sources,
+  and proposed contracts;
 - **Well-specified** clauses that are already deterministic and should not be touched;
-- **hidden assumptions**, **acceptance criteria**, and **open decisions** (product policy the source can't resolve).
+- **hidden assumptions**, **acceptance criteria**, and **open decisions**
+  (product or architecture choices the source cannot resolve).
 
 A worked end-to-end example is included at the bottom of [`SKILL.md`](SKILL.md).
+Repeated runs are opt-in; ordinary reviews still use one three-role pass.
 
 ---
 

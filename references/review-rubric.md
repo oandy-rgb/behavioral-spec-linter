@@ -4,7 +4,7 @@ Use this reference to classify findings consistently.
 
 ## Review Resolution
 
-Select one level before scoring. Include all lower levels.
+Select one level before reviewing. Include all lower levels.
 
 | Level | Focus | Typical checks |
 |---|---|---|
@@ -20,11 +20,11 @@ platform context to evaluate it.
 
 Do not penalize a document for omitting details above the selected level. Record
 important deeper concerns as `Out-of-resolution observations`; exclude them
-from the score and severity counts.
+from findings, the verdict, and the stability profile.
 
-## Score Comparability
+## Review Comparability
 
-A stability score is comparable only when all three remain fixed:
+A review is comparable only when all three remain fixed:
 
 1. review resolution;
 2. functional scope;
@@ -32,12 +32,85 @@ A stability score is comparable only when all three remain fixed:
 
 A revision that only removes ambiguity, fixes a contradiction, or clarifies
 existing behavior does **not** change functional scope; only adding, removing,
-or repurposing a feature does. Bug-fix and clarification revisions therefore
-remain score-comparable to the original at the same resolution.
+or repurposing a feature does.
 
-When comparing revisions, score both at the same resolution first. A separate
+When comparing revisions, review both at the same resolution first. A separate
 deeper review may be useful, but it is a new measurement rather than evidence
 that the revision regressed.
+
+## Finding Identity and Deduplication
+
+A finding's identity is the tuple:
+
+`Actor | Trigger | Unresolved decision | Observable consequence`
+
+Normalize these fields before comparison. Follow
+[reliability-protocol.md](reliability-protocol.md) for contradiction-aware
+semantic matching. Merge candidate findings only when all four fields are
+semantically equivalent and not contradictory. A merged finding:
+
+- retains every contributing scenario ID and source clause;
+- is counted once in the stability profile;
+- combines severity-vector fields using the deterministic ordering below;
+- chooses one finding type using the first matching rule below.
+
+Vector merge ordering:
+
+- Impact: `catastrophic > major > moderate > minor`;
+- Reach: `core > boundary > edge`;
+- Reversibility: `irreversible > recoverable > transient`;
+- Exposure: `external > internal`;
+- Evidence: `explicit > inferred`.
+
+For each field, retain the highest value demonstrated by any contributing
+scenario. Do not raise a field based on a merely speculative consequence.
+
+Type selection precedence:
+
+1. `Contradiction` when explicit clauses require incompatible outcomes.
+2. `Undefined term` when the decision turns on a term with no stable definition.
+3. `Missing contract` when no source clause defines the required behavior.
+4. `Ambiguity` when one passage supports multiple outcomes.
+5. `Unverifiable requirement` when compliance lacks an objective test.
+6. `Scope leak` when behavior crosses the stated actor or data boundary.
+7. `Hidden assumption` when an unstated fact selects the outcome.
+
+Do not merge findings when any identity field materially differs, even if one
+revision could address both.
+
+## Stability Profile
+
+Do not emit a numeric stability score unless the user supplies a calibrated
+benchmark and explicitly requests benchmark-based scoring. For ordinary
+reviews, report:
+
+- `Scenario convergence`: unanimous scenario outcomes divided by total scenarios;
+- `Open findings`: deduplicated counts by severity;
+- `Highest severity`;
+- `Review confidence`: `independent` when blind subagents were used, otherwise
+  `degraded`;
+- `Calibration`: `uncalibrated`.
+
+The profile is descriptive, not a probability or percentage quality score.
+Out-of-resolution observations, optional ideas, and editorial comments do not
+affect finding counts.
+
+A scenario is unanimous only when all three interpretations within a run agree
+on observable outputs, state changes, side effects, and ordering relevant at
+the selected resolution. Different explanatory wording or assumptions do not
+break convergence when observable behavior is identical.
+
+Derive the verdict without discretion:
+
+| Condition | Verdict |
+|---|---|
+| No open findings | `Implementation-ready` |
+| Any Critical finding, or any High finding with `Reach: core` | `Not implementable` |
+| Otherwise | `Implementable with caveats` |
+
+In optional reliability-audit mode, apply the separate support-tier rules in
+`reliability-protocol.md`; Contested findings remain visible but do not drive
+the audit verdict.
 
 ## Finding Types
 
@@ -51,18 +124,33 @@ that the revision regressed.
 | Hidden assumption | A plausible implementation depends on an unstated fact. | one currency, one time zone, synchronous processing |
 | Scope leak | Requirement unintentionally affects actors or data outside its stated scope. | tenant boundary or inherited permission unspecified |
 
-## Severity
+## Severity Vector
 
-- **Critical**: could cause security exposure, data loss, regulatory breach, or
-  irreversible incorrect state.
-- **High**: likely to produce materially different business behavior, API
-  compatibility, billing, authorization, or data writes.
-- **Medium**: affects edge cases, recoverability, operational behavior, or a
-  limited user flow.
-- **Low**: minor inconsistency or testability issue with little behavioral
-  impact.
+Record this vector for every finding:
 
-Severity measures impact, not how confusing the sentence looks.
+`Impact / Reach / Reversibility / Exposure / Evidence`
+
+Use only these values:
+
+| Metric | Values | Selection rule |
+|---|---|---|
+| Impact | `catastrophic`, `major`, `moderate`, `minor` | Catastrophic: security exposure, data loss, regulatory breach, or irreversible incorrect state. Major: material business behavior, API compatibility, billing, authorization, or data writes. Moderate: recoverability, operational behavior, or a limited user flow. Minor: testability or low-impact edge behavior. |
+| Reach | `core`, `boundary`, `edge` | Core changes the primary state transition or invariant. Boundary changes caller-visible exceptional behavior. Edge is confined to an uncommon, limited path. |
+| Reversibility | `irreversible`, `recoverable`, `transient` | Irreversible cannot be restored by normal corrective action. Recoverable persists until an explicit correction, rollback, or compensation. Transient disappears without corrective state change and leaves no lasting side effect. |
+| Exposure | `external`, `internal` | External affects a user, caller, persisted contract, or cross-component interface. |
+| Evidence | `explicit`, `inferred` | Explicit is demonstrated directly by conflicting or missing clauses. Inferred requires stated domain or architecture facts. Speculative concerns are not findings. |
+
+Map `Impact` to severity:
+
+| Impact | Severity |
+|---|---|
+| `catastrophic` | Critical |
+| `major` | High |
+| `moderate` | Medium |
+| `minor` | Low |
+
+The remaining vector fields explain the consequence and drive the verdict, but
+do not silently change the severity label.
 
 ## Evidence Standard
 
@@ -82,8 +170,10 @@ For a `Missing contract`, also ask:
 2. Would two plausible choices change observable behavior or violate an
    explicit invariant?
 
-If either answer is no, omit it or place it under `Open decisions`. Do not treat
-every conceivable feature, operational control, or business rule as missing.
+If either answer is no, omit it or place it under `Open decisions`. Open
+decisions may be product-policy or architecture-capability decisions. Do not
+treat every conceivable feature, operational control, or business rule as
+missing.
 
 ## Deliberate Freedom
 
@@ -139,9 +229,12 @@ Before proposing a contract, run a revision preflight:
 5. **Scope**: Does it add a product feature rather than clarify behavior?
 6. **Resolution**: Is it necessary at the selected review level?
 
-If a check cannot be answered from available context, state the prerequisite
-and put the choice under `Open decisions`. Do not present a speculative
-architecture choice as the only valid repair.
+If a check cannot be answered from available context, keep the finding but set
+`Proposed contract` to `Open decision — prerequisite: ...`. Put the alternatives
+under `Open decisions`. Do not present a speculative architecture choice as the
+only valid repair, and do not write acceptance criteria for an unselected
+alternative. Instead, give decision criteria that would allow the author to
+select a contract.
 
 Do not add requirements merely because they are common good practice. For
 example, audit logs, fees, notifications, retention periods, and administrative
