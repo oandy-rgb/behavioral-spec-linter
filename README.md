@@ -1,8 +1,8 @@
-# 🛡️ SpecLint
+# 🛡️ Behavioral Spec Linter
 
 > **Stop letting AI agents "hallucinate" your business logic. Validate your specs before you write a single line of code.**
 
-`SpecLint` is an **agent skill** (`behavioral-spec-linter`) that acts as a **semantic linter** for software design documents (SDDs), requirement specs, API contracts, user stories, and implementation plans.
+`behavioral-spec-linter` is an **agent skill** that acts as a **semantic linter** for software design documents (SDDs), requirement specs, API contracts, user stories, and implementation plans.
 
 Instead of just generating code, it **stress-tests** your requirements with adversarial semantic perturbation to find the hidden ambiguities that lead to AI-generated bugs — and proposes minimal, testable revisions.
 
@@ -16,9 +16,9 @@ When you give a vague or ambiguous spec to an AI agent (Claude, GPT, Gemini):
 2.  **The silent fail**: it writes 500 lines of technically correct but logically wrong code.
 3.  **The debug loop**: you spend hours fixing bugs that all trace back to a single ambiguous sentence.
 
-## ✅ The Solution: SpecLint
+## ✅ The Solution: Behavioral Spec Linter
 
-SpecLint breaks the cycle by forcing the spec to *prove* it is unambiguous **before** development starts. It treats a specification as a behavioral contract and finds the places where two competent implementers would produce different observable behavior.
+The skill breaks the cycle by forcing the spec to *prove* it is unambiguous **before** development starts. It treats a specification as a behavioral contract and finds the places where two competent implementers would produce different observable behavior.
 
 ### How it works
 
@@ -27,7 +27,7 @@ SpecLint breaks the cycle by forcing the spec to *prove* it is unambiguous **bef
 3.  **Judge** — compare scenarios, normalize candidate findings, and cluster semantically equivalent findings while rejecting merely similar or contradictory matches.
 4.  **Report** — emit a compact stability profile and precise repairs. Optional reliability audits add repeated runs and finding-support metrics.
 
-> The blind, multi-agent path is what reliably surfaces divergence. Run without subagents and SpecLint marks the review `degraded single-context (lower confidence)` rather than pretending the interpretations were independent.
+> The blind, multi-agent path is what reliably surfaces divergence. Run without subagents and the skill marks the review `degraded single-context (lower confidence)` rather than pretending the interpretations were independent.
 
 ---
 
@@ -68,4 +68,4 @@ Repeated runs are opt-in; ordinary reviews still use one three-role pass.
 
 ## 🎯 Design principle
 
-SpecLint optimizes for **low false positives**. It does not nag about every conceivable missing feature, audit log, or best practice — it reports a problem only when two readings produce materially different behavior, or an omission forces an implementer to guess. Deliberate freedom (`MAY`, explicit ranges, implementation-defined choices) is not treated as a defect.
+The linter optimizes for **low false positives**. It does not nag about every conceivable missing feature, audit log, or best practice — it reports a problem only when two readings produce materially different behavior, or an omission forces an implementer to guess. Deliberate freedom (`MAY`, explicit ranges, implementation-defined choices) is not treated as a defect.
