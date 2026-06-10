@@ -1,0 +1,4 @@
+interface:
+  display_name: "Behavioral Spec Linter"
+  short_description: "Find ambiguity and hidden assumptions in software specs"
+  default_prompt: "Use $behavioral-spec-linter to stress-test this software specification and propose precise revisions."
