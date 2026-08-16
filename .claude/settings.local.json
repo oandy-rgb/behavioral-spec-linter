@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//tmp/**)",
+      "Bash(timeout 120 npx -y skills find \"vigiles\")",
+      "WebFetch(domain:skills.sh)",
+      "Bash(timeout 120 npx -y skills add eho/agent-skills@design-doc-reviewer -g -y)",
+      "Bash(claude update *)",
+      "WebFetch(domain:search.nixos.org)",
+      "WebFetch(domain:github.com)",
+      "Bash(timeout 60 nix eval --raw nixpkgs#claude-code.version)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(timeout 60 nix eval --raw github:NixOS/nixpkgs/nixos-unstable#claude-code.version)",
+      "Bash(timeout 30 curl -s https://registry.npmjs.org/@anthropic-ai/claude-code/latest)",
+      "Bash(timeout 30 curl -s https://raw.githubusercontent.com/sadjow/claude-code-nix/main/flake.nix)",
+      "Bash(timeout 40 nix eval --raw github:sadjow/claude-code-nix#claude-code.version)",
+      "Bash(timeout 40 nix eval --raw github:sadjow/claude-code-nix#default.version)",
+      "Bash(timeout 30 curl -s \"https://api.github.com/repos/sadjow/claude-code-nix/commits?per_page=1\")",
+      "Bash(git -C /home/oandy/Desktop/git/behavioral-spec-linter diff --stat)",
+      "Bash(git -C /home/oandy/Desktop/git/behavioral-spec-linter diff)",
+      "Bash(python3 -m pytest tests/ -q)",
+      "Bash(python3 -m unittest discover tests -q)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git rm *)",
+      "Bash(git commit *)",
+      "Bash(gh repo *)",
+      "Bash(git remote *)",
+      "Bash(git fetch *)",
+      "Bash(git push *)"
+    ]
+  }
+}
